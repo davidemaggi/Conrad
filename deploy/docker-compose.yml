@@ -1,0 +1,28 @@
+# docker compose -f deploy/docker-compose.yml up -d
+# Then open the URL printed in the logs and paste the one-time setup token:
+#   docker compose -f deploy/docker-compose.yml logs conrad | grep setup_token
+services:
+  conrad:
+    image: ghcr.io/davidemaggi/conrad:latest
+    container_name: conrad
+    restart: unless-stopped
+    ports:
+      - "80:80"     # http-01 challenges are made by Conrad *to* your hosts; this serves CRL/root downloads and redirects
+      - "443:443"
+    environment:
+      CONRAD_HOSTNAMES: ca.home.lab           # names on Conrad's own certificate; the first one is used in URLs
+      # CONRAD_EXTERNAL_URL: https://ca.home.lab
+      # CONRAD_DNS_RESOLVERS: 192.168.1.1:53  # your LAN DNS, so Conrad resolves *.home.lab when validating
+      CONRAD_CA_PASSPHRASE_FILE: /run/secrets/ca_passphrase  # optional: unlock the CA automatically at start
+      TZ: Europe/Rome
+    volumes:
+      - conrad-data:/data
+    secrets:
+      - ca_passphrase
+
+secrets:
+  ca_passphrase:
+    file: ./ca_passphrase.txt   # chmod 600; delete this block to unlock from the web UI instead
+
+volumes:
+  conrad-data:

@@ -1,0 +1,41 @@
+# /etc/systemd/system/conrad.service
+#   sudo useradd --system --home /var/lib/conrad conrad
+#   sudo install -m 755 conrad /usr/local/bin/conrad
+#   sudo systemctl enable --now conrad
+[Unit]
+Description=Conrad certificate authority and ACME server
+Documentation=https://github.com/davidemaggi/conrad
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+User=conrad
+Group=conrad
+ExecStart=/usr/local/bin/conrad serve
+Environment=CONRAD_DATA_DIR=/var/lib/conrad
+EnvironmentFile=-/etc/conrad/conrad.env
+# Optional automatic unlock: echo 'passphrase' | sudo systemd-creds encrypt - /etc/conrad/ca_passphrase.cred
+# LoadCredentialEncrypted=ca_passphrase:/etc/conrad/ca_passphrase.cred
+# Environment=CONRAD_CA_PASSPHRASE_FILE=%d/ca_passphrase
+StateDirectory=conrad
+StateDirectoryMode=0700
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+CapabilityBoundingSet=CAP_NET_BIND_SERVICE
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=yes
+LockPersonality=yes
+MemoryDenyWriteExecute=yes
+SystemCallArchitectures=native
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

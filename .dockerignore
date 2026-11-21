@@ -1,0 +1,11 @@
+.git
+**/node_modules
+bin
+dist
+data
+internal/web/dist/*
+!internal/web/dist/.gitkeep
+web/*.tsbuildinfo
+docs
+.superpowers
+.claude

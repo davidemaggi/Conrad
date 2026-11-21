@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema.json
+version: 2
+project_name: conrad
+
+before:
+  hooks:
+    - go mod download
+    - npm --prefix web ci --no-audit --no-fund
+    - npm --prefix web run build
+
+builds:
+  - id: conrad
+    main: ./cmd/conrad
+    binary: conrad
+    env: [CGO_ENABLED=0]
+    flags: [-trimpath]
+    ldflags: ["-s -w -X main.version={{ .Version }}"]
+    goos: [linux, darwin, windows]
+    goarch: [amd64, arm64]
+
+archives:
+  - formats: [tar.gz]
+    format_overrides:
+      - goos: windows
+        formats: [zip]
+    files: [README.md, LICENSE*, deploy/conrad.service, deploy/docker-compose.yml]
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  filters:
+    exclude: ["^docs:", "^test:", "^chore:"]
+
+release:
+  footer: |
+    Container images: `ghcr.io/davidemaggi/conrad:{{ .Version }}` (static) and `ghcr.io/davidemaggi/conrad:{{ .Version }}-pkcs11` (HSM support).

@@ -1,0 +1,123 @@
+name: CI
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: web
+      - run: npm test
+        working-directory: web
+      - run: npm run build
+        working-directory: web
+      - uses: actions/upload-artifact@v5
+        with:
+          name: web-dist
+          path: internal/web/dist
+          retention-days: 1
+
+  go:
+    needs: web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - uses: actions/download-artifact@v5
+        with:
+          name: web-dist
+          path: internal/web/dist
+      - run: go vet ./...
+      - run: go test -race ./...
+      - run: CGO_ENABLED=0 go build -trimpath -o bin/conrad ./cmd/conrad
+      - uses: actions/upload-artifact@v5
+        with:
+          name: conrad-linux-amd64
+          path: bin/conrad
+          retention-days: 1
+
+  pkcs11:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+      - run: sudo apt-get update && sudo apt-get install -y softhsm2
+      - name: Init SoftHSM token
+        run: |
+          mkdir -p "$RUNNER_TEMP/softhsm"
+          printf 'directories.tokendir = %s\nobjectstore.backend = file\n' "$RUNNER_TEMP/softhsm" > "$RUNNER_TEMP/softhsm2.conf"
+          echo "SOFTHSM2_CONF=$RUNNER_TEMP/softhsm2.conf" >> "$GITHUB_ENV"
+          SOFTHSM2_CONF="$RUNNER_TEMP/softhsm2.conf" softhsm2-util --init-token --free --label conrad-test --pin 1234 --so-pin 1234
+      - run: CGO_ENABLED=1 go test -tags pkcs11 ./internal/crypto/signer/ ./internal/server/ -run PKCS11 -v
+        env:
+          CONRAD_TEST_PKCS11_MODULE: /usr/lib/softhsm/libsofthsm2.so
+      - run: CGO_ENABLED=1 go build -tags pkcs11 -o /dev/null ./cmd/conrad
+
+  certbot:
+    needs: go
+    runs-on: ubuntu-latest
+    env:
+      CONRAD_DATA_DIR: conrad-data
+      CONRAD_HTTPS_ADDR: 127.0.0.1:8443
+      CONRAD_HTTP_ADDR: none
+      CONRAD_HOSTNAMES: localhost
+      CONRAD_ADMIN_PASSWORD: ci-admin-password
+      CONRAD_CA_PASSPHRASE: ci-ca-passphrase
+    steps:
+      - uses: actions/download-artifact@v5
+        with:
+          name: conrad-linux-amd64
+      - run: chmod +x conrad && sudo apt-get update && sudo apt-get install -y certbot
+      - run: echo "127.0.0.1 www.ci.home.lab" | sudo tee -a /etc/hosts
+      - name: Init and start Conrad
+        run: |
+          ./conrad init
+          nohup ./conrad serve > conrad.log 2>&1 &
+          for _ in $(seq 30); do ./conrad healthcheck && break; sleep 1; done
+          curl -fsSk https://localhost:8443/roots/current.pem -o root.pem
+      - name: Obtain a certificate with certbot (http-01, standalone)
+        run: |
+          sudo REQUESTS_CA_BUNDLE="$PWD/root.pem" certbot certonly --standalone --non-interactive --agree-tos \
+            -m ci@ci.home.lab --server https://localhost:8443/acme/default/directory \
+            --config-dir "$RUNNER_TEMP/le" --work-dir "$RUNNER_TEMP/le" --logs-dir "$RUNNER_TEMP/le" \
+            -d www.ci.home.lab
+          sudo openssl x509 -in "$RUNNER_TEMP/le/live/www.ci.home.lab/cert.pem" -noout -subject -issuer -ext subjectAltName
+          sudo openssl verify -CAfile root.pem -untrusted "$RUNNER_TEMP/le/live/www.ci.home.lab/chain.pem" "$RUNNER_TEMP/le/live/www.ci.home.lab/cert.pem"
+      - name: Renew and revoke
+        run: |
+          sudo REQUESTS_CA_BUNDLE="$PWD/root.pem" certbot renew --force-renewal --non-interactive \
+            --config-dir "$RUNNER_TEMP/le" --work-dir "$RUNNER_TEMP/le" --logs-dir "$RUNNER_TEMP/le"
+          sudo REQUESTS_CA_BUNDLE="$PWD/root.pem" certbot revoke --non-interactive --cert-name www.ci.home.lab --no-delete-after-revoke \
+            --server https://localhost:8443/acme/default/directory \
+            --config-dir "$RUNNER_TEMP/le" --work-dir "$RUNNER_TEMP/le" --logs-dir "$RUNNER_TEMP/le"
+      - if: always()
+        run: cat conrad.log
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: deploy/Dockerfile
+          push: false
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

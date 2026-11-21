@@ -3,11 +3,14 @@ package main
 
 import (
 	"context"
+	"crypto/tls"
 	"errors"
 	"flag"
 	"fmt"
 	"io"
 	"log/slog"
+	"net"
+	"net/http"
 	"os"
 	"os/signal"
 	"strings"
@@ -35,6 +38,7 @@ Usage:
   conrad backup       [-config file] FILE     consistent online copy of the database
   conrad restore      [-config file] FILE     replace the database (server must be stopped)
   conrad reset-admin  [-config file]          new admin password, re-enable password login, end sessions
+  conrad healthcheck  [-config file]          exit 0 if the local server answers /healthz (for containers)
   conrad version
 `
 
@@ -56,6 +60,8 @@ func main() {
 		err = restore(args)
 	case "reset-admin":
 		err = resetAdmin(args)
+	case "healthcheck":
+		err = healthcheck(args)
 	case "version":
 		fmt.Println("conrad", version)
 	case "help", "-h", "--help":
@@ -276,5 +282,31 @@ func resetAdmin(args []string) error {
 		fmt.Println("new password:", pw)
 	}
 	fmt.Println("password login re-enabled; all sessions ended.")
+	return nil
+}
+
+// healthcheck probes the local listener; TLS is not verified because it targets loopback.
+func healthcheck(args []string) error {
+	cfg, err := loadConfig(flag.NewFlagSet("healthcheck", flag.ExitOnError), args)
+	if err != nil {
+		return err
+	}
+	_, port, err := net.SplitHostPort(cfg.HTTPSAddr)
+	if err != nil {
+		return err
+	}
+	scheme := "https"
+	if cfg.TLSMode == config.TLSOff {
+		scheme = "http"
+	}
+	c := &http.Client{Timeout: 3 * time.Second, Transport: &http.Transport{TLSClientConfig: &tls.Config{InsecureSkipVerify: true}}} //nolint:gosec // loopback probe
+	resp, err := c.Get(scheme + "://127.0.0.1:" + port + "/healthz")
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("healthz: %s", resp.Status)
+	}
 	return nil
 }
