@@ -12,6 +12,9 @@ import (
 //go:embed all:dist
 var dist embed.FS
 
+//go:embed placeholder.html
+var placeholder []byte
+
 // Handler serves static assets and falls back to index.html for client-side routes.
 func Handler() http.Handler {
 	sub, _ := fs.Sub(dist, "dist")
@@ -32,6 +35,11 @@ func Handler() http.Handler {
 			}
 		}
 		w.Header().Set("Cache-Control", "no-cache")
+		if _, err := fs.Stat(sub, "index.html"); err != nil {
+			w.Header().Set("Content-Type", "text/html; charset=utf-8")
+			_, _ = w.Write(placeholder)
+			return
+		}
 		http.ServeFileFS(w, r, sub, "index.html")
 	})
 }

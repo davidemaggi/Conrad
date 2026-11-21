@@ -1,0 +1,357 @@
+{
+  "app": { "tagline": "Homelab certificate authority" },
+  "common": {
+    "actions": "Actions", "add": "Add", "back": "Back", "cancel": "Cancel", "close": "Close", "copied": "Copied", "copy": "Copy",
+    "copyFailed": "Could not copy to the clipboard", "created": "Created", "delete": "Delete", "subject": "Subject", "details": "Details", "done": "Done",
+    "download": "Download", "edit": "Edit", "hidePassword": "Hide password", "showPassword": "Show password",
+    "inDays_one": "in {{count}} day", "inDays_other": "in {{count}} days",
+    "manage": "Manage", "next": "Next", "previous": "Previous", "no": "No", "yes": "Yes", "or": "or",
+    "range": "{{from}}–{{to}} of {{total}}", "reset": "Reset", "retry": "Retry", "save": "Save", "saved": "Saved",
+    "skipToContent": "Skip to content", "typeToConfirm": "Type to confirm:", "viewAll": "View all",
+    "years_one": "{{count}} year", "years_other": "{{count}} years"
+  },
+  "errors": {
+    "internal": "Something went wrong on the server.",
+    "not_found": "Not found.",
+    "validation": "Invalid input: {{message}}",
+    "network": "Cannot reach Conrad. Check your connection.",
+    "ca": {
+      "already_initialized": "The CA is already initialized.",
+      "locked": "The CA is locked. Unlock it to sign certificates.",
+      "not_initialized": "The CA is not initialized yet.",
+      "bad_secret": "Wrong passphrase or PIN.",
+      "failed": "CA operation failed: {{message}}"
+    },
+    "issuer": {
+      "cannot_revoke_default": "The default issuer cannot be revoked. Make another issuer the default first.",
+      "inactive": "This issuer is not active.",
+      "invalid_slug": "Use 2–32 lowercase letters, digits or single hyphens; start and end with a letter or digit.",
+      "slug_taken": "An issuer with this slug already exists.",
+      "confirm_mismatch": "The confirmation text does not match.",
+      "is_root": "This action only applies to issuers, not to the root."
+    },
+    "auth": {
+      "csrf": "Your session token expired. Reload the page.",
+      "invalid_credentials": "Wrong username or password.",
+      "password_disabled": "Password sign-in is disabled. Use single sign-on.",
+      "required": "Please sign in.",
+      "throttled": "Too many attempts. Try again in {{retryAfter}} s.",
+      "weak_password": "Password too weak: use at least 12 characters."
+    },
+    "cert": { "bad_csr": "Invalid CSR: {{message}}" },
+    "notify": { "invalid": "Invalid channel: {{message}}", "test_failed": "Test failed: {{message}}" },
+    "policy": { "invalid": "Invalid policy: {{message}}" },
+    "settings": {
+      "no_login_method": "At least one sign-in method must stay enabled.",
+      "oidc_invalid": "OIDC settings are invalid: {{message}}"
+    },
+    "setup": {
+      "bad_token": "The setup token is wrong. Copy it again from the server log.",
+      "ca_failed": "Could not create the CA: {{message}}",
+      "done": "Setup is already complete."
+    }
+  },
+  "status": {
+    "valid": "Valid", "active": "Active", "revoked": "Revoked", "expired": "Expired", "retired": "Retired",
+    "expiresIn_one": "Expires in {{count}} day", "expiresIn_other": "Expires in {{count}} days"
+  },
+  "nav": {
+    "label": "Main navigation", "open": "Open menu",
+    "groups": { "overview": "Overview", "pki": "PKI", "guides": "Guides", "system": "System" },
+    "dashboard": "Dashboard", "authorities": "Authorities", "certificates": "Certificates", "accounts": "ACME accounts",
+    "install": "Trust the root CA", "clients": "ACME clients", "notifications": "Notifications", "audit": "Audit log", "settings": "Settings"
+  },
+  "command": {
+    "placeholderShort": "Search…", "placeholder": "Search pages, authorities, actions…", "open": "Open command menu",
+    "empty": "No results.", "actions": "Actions", "pages": "Pages", "searchCerts": "Search certificates for “{{q}}”"
+  },
+  "prefs": {
+    "language": "Language", "theme": "Theme", "light": "Light", "dark": "Dark", "system": "System",
+    "account": "Account", "signedInAs": "Signed in as"
+  },
+  "auth": {
+    "method": { "password": "Password", "oidc": "Single sign-on" },
+    "logout": "Sign out", "signIn": "Sign in", "signInText": "Sign in to manage your certificate authority.",
+    "username": "Username", "password": "Password",
+    "throttledWait_one": "Too many attempts. Try again in {{count}} second.",
+    "throttledWait_other": "Too many attempts. Try again in {{count}} seconds.",
+    "signInOidc": "Sign in with single sign-on",
+    "oidcErrors": {
+      "oidc_denied": "Single sign-on was denied or this account is not allowed.",
+      "oidc_unavailable": "The identity provider is unreachable or misconfigured.",
+      "generic": "Single sign-on failed."
+    },
+    "noMethod": "No sign-in method is enabled. Re-enable password login from the server CLI.",
+    "heroTitle": "Your homelab, certified.",
+    "heroText": "A private certificate authority with a built-in ACME server. Issue trusted HTTPS certificates for every service, renewed automatically.",
+    "heroFooter": "RFC 8555 · works with certbot, Caddy, Traefik, cert-manager"
+  },
+  "unlock": {
+    "done": "CA unlocked.", "bannerTitle": "The CA is locked",
+    "bannerText": "Certificates cannot be issued or renewed until you unlock the CA keys.",
+    "action": "Unlock", "title": "Unlock the CA", "description": "Enter the CA passphrase (or HSM PIN) chosen during setup.",
+    "secret": "Passphrase or PIN"
+  },
+  "dashboard": {
+    "eyebrow": "Overview", "description": "Certificates, authorities and recent activity at a glance.",
+    "active": "Active certificates",
+    "expiring_one": "Expiring in {{count}} day", "expiring_other": "Expiring in {{count}} days",
+    "revoked": "Revoked", "accounts": "ACME accounts", "expiringSoon": "Expiring soon",
+    "nothingExpiring": "Nothing is expiring soon", "nothingExpiringText": "ACME clients renew automatically; manual certificates show up here before they expire.",
+    "recentActivity": "Recent activity"
+  },
+  "ca": {
+    "commonName": "Common name", "organization": "Organization", "country": "Country", "countryHint": "Two-letter code, e.g. IT.",
+    "algorithm": "Key algorithm", "validityYears": "Validity (years)", "nameConstraints": "Name constraints",
+    "nameConstraintsHint": "Optional. One permitted domain per line (e.g. home.lab); leave empty for no constraint.",
+    "slug": "Slug", "slugHint": "Used in the ACME URL: /acme/<slug>/directory", "name": "Name", "description": "Description"
+  },
+  "authorities": {
+    "description": "Your root CA and the issuing CAs that sign certificates. Each issuer has its own ACME directory and policy.",
+    "create": "New issuer", "createText": "An issuing CA signed by the active root, with its own ACME directory, policy and EAB keys.",
+    "createAction": "Create issuer", "created": "Issuer “{{name}}” created",
+    "root": "Root", "default": "Default", "issuers": "Issuers", "noIssuers": "No issuers under this root.",
+    "copyDirectory": "Copy directory URL",
+    "certCount_one": "{{n}} certificate", "certCount_other": "{{n}} certificates",
+    "clonePolicy": "Start from policy", "clonePolicyHint": "Copy the policy of an existing issuer.", "defaultPolicy": "Default policy",
+    "makeDefault": "Make default issuer",
+    "successor": "Successor root", "successorAction": "Generate successor",
+    "successorText": "Generates a new root CA, cross-signed by the current one, so clients that trust the old root keep working. Use it well before the current root expires.",
+    "successorCreated": "Successor root created",
+    "details": "Details", "edit": "Edit authority", "crl": "CRL", "crlUpdated": "Updated {{date}}",
+    "directory": "ACME directory", "directoryText": "Point your ACME clients to this URL.", "clientSnippets": "Client snippets",
+    "setDefault": "Make default", "setDefaultText": "“{{name}}” will serve the default ACME directory and sign Conrad's own HTTPS certificate.",
+    "defaultChanged": "Default issuer changed",
+    "rotate": "Rotate", "rotateText": "Creates a new key and certificate for “{{slug}}”. The ACME URL stays the same; the old issuer is retired but its certificates remain valid.",
+    "rotated": "Issuer rotated",
+    "revoke": "Revoke issuer", "revokeText": "The issuer certificate is revoked by the root and its ACME directory stops working. Certificates it signed will no longer be trusted. This cannot be undone.",
+    "revokedToast": "Issuer revoked",
+    "tabs": { "overview": "Overview", "policy": "Policy", "eab": "EAB keys", "certs": "Certificates" }
+  },
+  "policy": {
+    "title": "Issuance policy", "description": "What this issuer is allowed to sign, for ACME and manual requests.",
+    "allowedDomains": "Allowed domains", "allowedDomainsHint": "One per line. *.home.lab allows any name under home.lab; leave empty to allow anything.",
+    "allowWildcards": "Wildcard certificates", "allowWildcardsHint": "Allow names like *.home.lab.",
+    "allowIPs": "IP addresses", "allowIPsHint": "Allow IP SANs (validated with http-01 or tls-alpn-01).",
+    "requireEAB": "Require EAB", "requireEABHint": "Only ACME clients with an External Account Binding key can register.",
+    "clientAuth": "Client authentication", "clientAuthHint": "Add the clientAuth extended key usage (mTLS).",
+    "defaultValidity": "Default validity", "maxValidity": "Maximum validity", "days": "days",
+    "keyTypes": "Allowed key types", "challenges": "Allowed challenges",
+    "ordersPerHour": "Orders per account per hour", "accountsPerHour": "New accounts per IP per hour", "zeroUnlimited": "0 = unlimited"
+  },
+  "eab": {
+    "title": "External Account Binding", "description": "Keys that let an ACME client register an account with this issuer.",
+    "create": "New EAB key", "createText": "Give the key a name so you know which client uses it.", "nameHint": "For example the host name.",
+    "generate": "Generate key", "createdTitle": "EAB key created",
+    "createdText": "Copy the HMAC now: it is shown only once. Each key can bind a single ACME account.",
+    "kid": "Key ID", "hmac": "HMAC key", "state": "State", "bound": "Bound", "unused": "Unused",
+    "empty": "No EAB keys", "emptyText": "Create one when you enable “Require EAB” or want to control which clients can register.",
+    "revoke": "Revoke key", "revokeText": "“{{name}}” can no longer be used to register new accounts.", "revoked": "EAB key revoked"
+  },
+  "certs": {
+    "description": "Every certificate signed by Conrad, from ACME clients and manual requests.",
+    "issue": "Issue certificate", "issueText": "Sign a certificate without an ACME client: let Conrad generate the key, or paste a CSR.",
+    "issueAction": "Issue", "issued": "Certificate issued", "issuedTitle": "Certificate issued",
+    "issuedText": "Download the certificate and the full chain.",
+    "issuedKeyWarning": "Download the private key now: Conrad does not keep it and cannot show it again.",
+    "downloadCert": "Certificate", "downloadFullchain": "Full chain", "downloadKey": "Private key", "privateKey": "Private key",
+    "openDetail": "Open details", "issuer": "Issuer", "modeGenerate": "Generate key", "modeCsr": "Use a CSR",
+    "names": "Names", "namesHint": "DNS names or IP addresses, one per line.", "keyAlgorithm": "Key algorithm",
+    "pfxPassword": "PFX password", "pfxPasswordHint": "Optional: also create a PKCS#12 (.pfx) bundle.",
+    "csr": "CSR (PEM)", "csrHint": "Names and key are taken from the CSR.",
+    "validityDays": "Validity (days)", "validityHint": "Empty uses the issuer's default; capped by its policy.",
+    "search": "Search certificates", "searchPlaceholder": "Search names or serial…",
+    "status": "Status", "allIssuers": "All issuers",
+    "filter": { "all": "All statuses", "valid": "Valid", "expiring": "Expiring (30 days)", "expired": "Expired", "revoked": "Revoked" },
+    "empty": "No certificates yet", "emptyText": "Point an ACME client at an issuer or issue one manually.",
+    "noMatch": "No certificates match these filters", "clearFilters": "Clear filters",
+    "name": "Name", "source": "Source", "expires": "Expires",
+    "moreNames_one": "+{{count}} name", "moreNames_other": "+{{count}} names",
+    "sources": { "acme": "ACME", "manual": "Manual", "system": "Conrad (HTTPS)" },
+    "serial": "Serial", "fingerprint": "SHA-256 fingerprint", "notBefore": "Valid from", "notAfter": "Valid until",
+    "account": "ACME account", "sans": "Subject alternative names", "pem": "Certificate (PEM)", "chain": "Chain (PEM)",
+    "revoke": "Revoke", "revokeText": "Revoked certificates are listed in the CRL and reported by OCSP. This cannot be undone.",
+    "revokedToast": "Certificate revoked", "reason": "Reason",
+    "reasons": {
+      "unspecified": "Unspecified", "keyCompromise": "Key compromise", "affiliationChanged": "Affiliation changed",
+      "superseded": "Superseded", "cessationOfOperation": "Cessation of operation", "privilegeWithdrawn": "Privilege withdrawn"
+    }
+  },
+  "accounts": {
+    "description": "Accounts registered by ACME clients. Deactivating an account stops it from ordering certificates.",
+    "account": "Account", "contacts": "Contacts", "orders": "Orders",
+    "status": { "valid": "Active", "deactivated": "Deactivated", "revoked": "Revoked" },
+    "deactivate": "Deactivate", "deactivateText": "The client will no longer be able to order or renew certificates with this account. Its certificates stay valid.",
+    "deactivated": "Account deactivated", "empty": "No ACME accounts yet", "emptyText": "They appear when a client registers with an issuer's directory."
+  },
+  "audit": {
+    "description": "Everything that happened in Conrad: sign-ins, issuance, revocations and configuration changes.",
+    "filter": "Filter by category", "all": "All events", "when": "When", "action": "Event", "actor": "Actor", "details": "Details",
+    "empty": "No events",
+    "groups": {
+      "auth": "Sign-in", "cert": "Certificates", "order": "ACME orders", "challenge": "ACME challenges", "account": "ACME accounts",
+      "issuer": "Issuers", "root": "Root", "authority": "Authorities", "eab": "EAB keys", "policy": "Policies", "ca": "CA",
+      "notify": "Notifications", "settings": "Settings", "setup": "Setup", "system": "System"
+    },
+    "actions": {
+      "account_created": "ACME account created", "account_deactivated": "ACME account deactivated", "account_keychange": "ACME account key changed",
+      "auth_login": "Signed in", "auth_login_failed": "Sign-in failed", "auth_logout": "Signed out", "auth_password_changed": "Password changed",
+      "authority_updated": "Authority updated", "ca_initialized": "CA initialized", "ca_unlocked": "CA unlocked", "ca_unlock_failed": "CA unlock failed",
+      "cert_issued": "Certificate issued", "cert_revoked": "Certificate revoked",
+      "challenge_valid": "Challenge validated", "challenge_invalid": "Challenge failed",
+      "eab_created": "EAB key created", "eab_revoked": "EAB key revoked",
+      "issuer_created": "Issuer created", "issuer_default_changed": "Default issuer changed", "issuer_revoked": "Issuer revoked", "issuer_rotated": "Issuer rotated",
+      "notify_channel_created": "Notification channel created", "notify_channel_deleted": "Notification channel deleted",
+      "notify_channel_updated": "Notification channel updated", "notify_settings_changed": "Notification settings changed",
+      "order_created": "ACME order created", "order_invalid": "ACME order failed", "policy_updated": "Policy updated",
+      "root_successor_created": "Successor root created", "settings_auth_changed": "Sign-in settings changed",
+      "setup_completed": "Setup completed", "system_backup": "Backup downloaded"
+    }
+  },
+  "install": {
+    "description": "Devices only trust Conrad's certificates after the root CA is installed. Do it once per device.",
+    "fingerprint": "SHA-256 fingerprint", "noRoot": "No active root CA.",
+    "downloadCrt": "Download .crt", "downloadPem": "Download .pem", "platforms": "Platforms",
+    "verifyHint": "The first download cannot be verified over HTTPS, because your device does not trust Conrad yet: compare the fingerprint above with the one printed by the commands.",
+    "next": "Next: get certificates for your services.",
+    "windows": {
+      "s1": "Download the certificate and check its fingerprint (PowerShell or cmd):",
+      "s2": "In an elevated PowerShell, add it to the machine's trusted roots:",
+      "s3": "Or with certutil from an elevated prompt:",
+      "note": "Chrome and Edge use the Windows store. Firefox needs its own setting, see the Firefox tab."
+    },
+    "macos": {
+      "s1": "Download the certificate and check its fingerprint:",
+      "s2": "Add it to the System keychain as a trusted root:",
+      "note": "You can also double-click the file, then in Keychain Access set “When using this certificate” to “Always Trust”."
+    },
+    "debian": { "s1": "Download the root as PEM into the local CA folder (the .crt extension is required):", "s2": "Rebuild the system bundle:" },
+    "fedora": { "s1": "Download the root into the trust anchors:", "s2": "Rebuild the system bundle:" },
+    "arch": { "s1": "Download the root and add it as a trust anchor:" },
+    "ios": {
+      "s1": "Open <a>the configuration profile</a> in Safari and allow the download.",
+      "s2": "Go to Settings → General → VPN & Device Management, choose “Conrad” and install it.",
+      "s3": "Go to Settings → General → About → Certificate Trust Settings and turn on full trust for the root."
+    },
+    "android": {
+      "s1": "Download <a>the certificate</a> on the device.",
+      "s2": "Go to Settings → Security → Encryption & credentials → Install a certificate → CA certificate, and pick the file.",
+      "note": "Many apps ignore user-installed CAs; browsers like Chrome accept them."
+    },
+    "firefox": {
+      "s1": "Firefox has its own certificate store. On Windows and macOS it can reuse the system roots; on Linux point it at the file.",
+      "s2": "Create policies.json in the Firefox distribution folder (e.g. /etc/firefox/policies/):"
+    },
+    "docker": { "s1": "Download the root next to your Dockerfile:", "s2": "Install it into the image:" },
+    "runtimes": {
+      "hint": "Own trust stores",
+      "s1": "Java uses its own keystore:",
+      "s2": "Node.js does not read the system store; add the root explicitly:",
+      "s3": "Python requests uses certifi; point it at the system bundle:"
+    }
+  },
+  "clients": {
+    "description": "Copy-paste configuration for popular ACME clients, filled in with your issuer's directory.",
+    "hostname": "Example hostname", "clients": "ACME clients",
+    "eabRequired": "This issuer requires an External Account Binding: replace <EAB_KID> and <EAB_HMAC> with a key.",
+    "eabCreate": "Create an EAB key →",
+    "trustFirst": "Clients must trust the root CA before they can talk to Conrad's ACME server.",
+    "certbot": {
+      "s1": "Get a certificate with the built-in web server (port 80 must be free):",
+      "s2": "Or let certbot configure nginx directly:",
+      "s3": "Renewal is automatic (systemd timer); test it with:",
+      "note": "The certbot snap ships its own CA bundle: REQUESTS_CA_BUNDLE makes it trust Conrad's root."
+    },
+    "acmesh": { "s0": "Register an account with your EAB key:", "s1": "Issue a certificate:", "s2": "Install it and reload your web server on renewal:" },
+    "lego": { "s1": "Obtain a certificate with the HTTP challenge:" },
+    "caddy": {
+      "s1": "Copy the root CA to /etc/caddy/conrad-root-ca.crt.",
+      "s2": "Set Conrad as the global ACME CA; every site gets a certificate automatically:"
+    },
+    "traefik": { "s1": "Add a certificate resolver to the static configuration:", "s2": "Make Traefik trust the root and use the resolver on your routers:" },
+    "certmanager": {
+      "s0": "Store the EAB HMAC in a secret:",
+      "s1": "Create a ClusterIssuer (the root CA is already embedded as caBundle):",
+      "s2": "Annotate your Ingresses to use it:"
+    },
+    "winacme": { "s1": "Run win-acme in PowerShell (trust the root on Windows first):" }
+  },
+  "notify": {
+    "description": "Get an email or a webhook call before certificates expire and when something goes wrong.",
+    "addChannel": "Add channel", "editChannel": "Edit channel", "kind": "Channel type",
+    "kinds": { "smtp": "Email", "smtpText": "Any SMTP server or relay", "webhook": "Webhook", "webhookText": "ntfy, Gotify, n8n, Home Assistant…" },
+    "enabled": "Enabled", "disabled": "Disabled",
+    "host": "SMTP server", "port": "Port", "security": "Security",
+    "securityModes": { "none": "None (plain)", "starttls": "STARTTLS", "tls": "TLS (SMTPS)" },
+    "username": "Username", "usernameHint": "Leave empty for relays without authentication.", "password": "Password", "authMethod": "Auth method",
+    "plaintextWarning": "Credentials will be sent unencrypted. Use STARTTLS or TLS unless the relay is on a trusted network.",
+    "from": "From", "to": "Recipients", "toHint": "One address per line.",
+    "skipVerify": "Skip TLS certificate verification (self-signed mail servers)",
+    "secret": "Signing secret", "secretHint": "Optional. Requests carry an X-Conrad-Signature HMAC-SHA256 header.",
+    "events": "Events",
+    "eventNames": {
+      "cert_expiring": "Certificate expiring", "cert_issued": "Certificate issued", "cert_revoked": "Certificate revoked",
+      "ca_expiring": "CA expiring", "ca_locked": "CA locked", "acme_failed": "ACME failure"
+    },
+    "eventHints": {
+      "cert_expiring": "At each threshold below", "cert_issued": "Every new certificate (can be noisy)", "cert_revoked": "When a certificate is revoked",
+      "ca_expiring": "90, 30, 7 and 1 days before", "ca_locked": "Conrad started with locked keys", "acme_failed": "Failed challenges and orders"
+    },
+    "sendTest": "Send test", "testSent": "Test notification sent",
+    "empty": "No channels yet", "emptyText": "Add an email or webhook channel to be warned before certificates expire.",
+    "eventCount_one": "{{count}} event", "eventCount_other": "{{count}} events",
+    "deleteTitle": "Delete channel", "deleteText": "“{{name}}” will stop receiving notifications.", "deleted": "Channel deleted",
+    "thresholds": "Expiry warnings", "thresholdsText": "When to warn before a certificate expires. Renewed certificates are skipped.",
+    "daysBefore_one": "{{count}} day", "daysBefore_other": "{{count}} days",
+    "removeThreshold_one": "Remove {{count}} day", "removeThreshold_other": "Remove {{count}} days",
+    "addThreshold": "Days before", "caThresholds": "Root and issuer warnings are fixed at 90, 30, 7 and 1 days."
+  },
+  "settings": {
+    "description": "Your account, sign-in methods and system information.",
+    "profile": "Profile", "account": "Account", "accountText": "The single administrator of this Conrad instance.",
+    "languageText": "Used for the interface and for emails.", "themeText": "System follows your device setting.",
+    "password": "Password", "passwordText": "Changing the password signs out every other session.",
+    "currentPassword": "Current password", "newPassword": "New password", "changePassword": "Change password", "passwordChanged": "Password changed",
+    "authentication": "Sign-in", "oidc": "Single sign-on (OIDC)",
+    "oidcText": "Sign in with Authentik, Authelia, Keycloak, Pocket ID or any OpenID Connect provider.",
+    "oidcEnabled": "Enable single sign-on", "redirectUrl": "Redirect URL", "redirectUrlHint": "Register this URL in your identity provider.",
+    "issuerUrl": "Issuer URL", "clientId": "Client ID", "clientSecret": "Client secret", "secretKept": "Leave empty to keep the stored secret.",
+    "allowedEmail": "Allowed email", "allowedSubject": "Allowed subject", "allowedHint": "Only this identity may sign in. Set at least one.",
+    "passwordLogin": "Password sign-in", "passwordLoginText": "Disable it once single sign-on works.",
+    "passwordLoginEnabled": "Allow password sign-in",
+    "passwordLoginWarning": "If the identity provider is down you can re-enable password sign-in with the conrad CLI.",
+    "system": "System", "systemText": "Runtime information about this instance.",
+    "version": "Version", "baseUrl": "External URL", "dataDir": "Data directory", "keyProvider": "Key storage",
+    "locked": "Locked", "unlocked": "Unlocked", "runtime": "Runtime", "uptime": "Uptime",
+    "backup": "Backup", "backupText": "A consistent snapshot of the database, including the encrypted CA keys.",
+    "downloadBackup": "Download backup", "backupNote": "Keys stay encrypted with your CA passphrase: keep the passphrase too, or the backup cannot be restored."
+  },
+  "setup": {
+    "title": "Set up Conrad", "eyebrow": "First run", "progress": "Step {{step}} of {{total}}",
+    "doneTitle": "Approved!", "doneText": "Your certificate authority is ready. Install the root CA on your devices, then point your ACME clients at Conrad.",
+    "downloadRoot": "Download root CA", "continue": "Continue", "finish": "Create my CA",
+    "token": "Setup token", "tokenHint": "Printed in the server log on first start.",
+    "passwordHint": "At least 12 characters.", "confirmPassword": "Confirm password",
+    "caMode": "Certificate authority", "generate": "Generate new", "generateText": "Conrad creates a root and an issuing CA.",
+    "import": "Import existing", "importText": "Use a root and issuer you already have (PEM).",
+    "passphrase": "CA passphrase", "passphraseHint": "Encrypts the CA keys at rest. Needed after every restart unless set in the config.",
+    "pin": "HSM PIN", "pinHint": "PIN of the PKCS#11 token holding the keys.", "confirmPassphrase": "Confirm passphrase",
+    "root": "Root CA", "issuer": "Issuing CA",
+    "steps": {
+      "welcome": { "title": "Welcome", "text": "Conrad is a private CA with an ACME server for your homelab. Setup takes a minute.", "short": "Welcome" },
+      "admin": { "title": "Administrator", "text": "Create the single admin account.", "short": "Admin" },
+      "ca": { "title": "Certificate authority", "text": "Generate a new CA or import one you already use.", "short": "CA" },
+      "policy": { "title": "Issuance policy", "text": "Which names the default issuer may sign. You can change it later.", "short": "Policy" },
+      "review": { "title": "Review", "text": "Check everything, then create your CA.", "short": "Review" }
+    },
+    "errors": {
+      "token": "Enter the setup token.", "username": "Enter a username.", "mismatch": "The values do not match.",
+      "passphrase": "Use at least 12 characters.", "pin": "Enter the HSM PIN.", "cn": "Enter a common name.", "pems": "Paste the certificate and key PEMs."
+    },
+    "pem": {
+      "rootCertPem": "Root certificate (PEM)", "rootKeyPem": "Root private key (PEM)", "issuerCertPem": "Issuer certificate (PEM)",
+      "issuerKeyPem": "Issuer private key (PEM)", "rootKeyHint": "Optional: without it Conrad cannot create new issuers or a successor root."
+    }
+  },
+  "notFound": { "title": "Page not found", "text": "This page was not approved. Check the address or go back to the dashboard.", "home": "Go to dashboard" }
+}

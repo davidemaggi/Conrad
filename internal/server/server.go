@@ -204,7 +204,7 @@ func (s *Server) common(h http.Handler) http.Handler {
 }
 
 func spaHeaders(h http.Handler) http.Handler {
-	const csp = "default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
+	const csp = "default-src 'self'; img-src 'self' data:; font-src 'self' data:; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
 		"connect-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Security-Policy", csp)

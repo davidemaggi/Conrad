@@ -1,1 +1,9 @@
 .superpowers/
+node_modules/
+__pycache__/
+.DS_Store
+*.log
+internal/web/dist/*
+!internal/web/dist/.gitkeep
+bin/
+*.tsbuildinfo

@@ -1,0 +1,185 @@
+@import "tailwindcss";
+@import "@fontsource-variable/inter";
+@import "@fontsource-variable/jetbrains-mono";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Primitive → semantic tokens (spec §7). Light = "Bureau", dark = "Night shift". */
+:root {
+  --suit-900: #1f3a1a;
+  --suit-800: #2b4c24;
+  --suit-700: #3f6b35;
+  --suit-300: #7fb069;
+  --cream-50: #faf7ee;
+
+  --background: #faf7ee;
+  --foreground: #1c2419;
+  --card: #ffffff;
+  --card-foreground: #1c2419;
+  --popover: #ffffff;
+  --popover-foreground: #1c2419;
+  --primary: #3f6b35;
+  --primary-foreground: #ffffff;
+  --secondary: #efeadb;
+  --secondary-foreground: #2b3327;
+  --muted: #f1ede1;
+  --muted-foreground: #5b6356;
+  --accent: #ebe5d3;
+  --accent-foreground: #2b3327;
+  --ink: #4a3424;
+  --destructive: #b0332a;
+  --destructive-foreground: #ffffff;
+  --info: #2f6690;
+  --info-fill: #5b8fb9;
+  --warning: #8a5e14;
+  --warning-fill: #c08a2e;
+  --success: #3f6b35;
+  --border: #e0d9c6;
+  --input: #d6cfba;
+  --ring: #3f6b35;
+
+  --sidebar: #2b4c24;
+  --sidebar-foreground: #eef0e4;
+  --sidebar-muted: #b9c8ad;
+  --sidebar-active: #faf7ee;
+  --sidebar-active-foreground: #23401d;
+  --sidebar-hover: rgb(255 255 255 / 0.08);
+  --sidebar-border: rgb(255 255 255 / 0.1);
+
+  --radius: 0.625rem;
+}
+
+.dark {
+  --background: #141a13;
+  --foreground: #e7ece2;
+  --card: #1d251b;
+  --card-foreground: #e7ece2;
+  --popover: #1d251b;
+  --popover-foreground: #e7ece2;
+  --primary: #7fb069;
+  --primary-foreground: #0f170d;
+  --secondary: #263023;
+  --secondary-foreground: #e7ece2;
+  --muted: #232c21;
+  --muted-foreground: #a6b09f;
+  --accent: #2a3527;
+  --accent-foreground: #e7ece2;
+  --ink: #c49a72;
+  --destructive: #e0574b;
+  --destructive-foreground: #140b0a;
+  --info: #8fc1e3;
+  --info-fill: #8fc1e3;
+  --warning: #e9c47d;
+  --warning-fill: #e3b25a;
+  --success: #7fb069;
+  --border: #2f3a2c;
+  --input: #3a4636;
+  --ring: #7fb069;
+
+  --sidebar: #172515;
+  --sidebar-foreground: #e2e9dc;
+  --sidebar-muted: #9fb193;
+  --sidebar-active: #7fb069;
+  --sidebar-active-foreground: #0f170d;
+  --sidebar-hover: rgb(255 255 255 / 0.06);
+  --sidebar-border: rgb(255 255 255 / 0.08);
+}
+
+@theme inline {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono Variable", ui-monospace, SFMono-Regular, Menlo, monospace;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-ink: var(--ink);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-info: var(--info);
+  --color-info-fill: var(--info-fill);
+  --color-warning: var(--warning);
+  --color-warning-fill: var(--warning-fill);
+  --color-success: var(--success);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --color-sidebar-active: var(--sidebar-active);
+  --color-sidebar-active-foreground: var(--sidebar-active-foreground);
+  --color-sidebar-hover: var(--sidebar-hover);
+  --color-sidebar-border: var(--sidebar-border);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    font-feature-settings: "cv11", "ss01";
+    touch-action: manipulation;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-ring;
+  }
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]),
+  a[href],
+  label[for],
+  select {
+    cursor: pointer;
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Rubber-stamp eyebrow label used for section captions. */
+@utility stamp-label {
+  @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground;
+}
+
+@utility wrap-anywhere {
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+@keyframes in-fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes in-pop { from { opacity: 0; transform: translate(-50%, -48%) scale(0.97) } to { opacity: 1; transform: translate(-50%, -50%) scale(1) } }
+@keyframes in-down { from { opacity: 0; transform: translateY(-4px) } to { opacity: 1; transform: translateY(0) } }
+@keyframes in-left { from { transform: translateX(-100%) } to { transform: translateX(0) } }
+@keyframes stamp { 0% { opacity: 0; transform: scale(1.25) rotate(-14deg) } 60% { opacity: 1; transform: scale(0.96) rotate(-8deg) } 100% { transform: scale(1) rotate(-8deg) } }
+.anim-fade { animation: in-fade 160ms ease-out }
+.anim-pop { animation: in-pop 180ms cubic-bezier(0.2, 0.9, 0.3, 1.1) }
+.anim-down { animation: in-down 140ms ease-out }
+.anim-left { animation: in-left 220ms cubic-bezier(0.2, 0.9, 0.3, 1) }
+.anim-stamp { animation: stamp 420ms cubic-bezier(0.3, 1.4, 0.5, 1) both }
