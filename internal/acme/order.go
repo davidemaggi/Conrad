@@ -546,6 +546,7 @@ func (s *Server) certificate(w http.ResponseWriter, r *http.Request, slug string
 	}
 	w.Header().Set("Content-Type", "application/pem-certificate-chain")
 	w.WriteHeader(200)
-	fmt.Fprint(w, strings.TrimSpace(c.CertPEM)+"\n"+strings.TrimSpace(c.ChainPEM)+"\n")
+	// ChainPEM is already the full chain: leaf first, then the issuers.
+	fmt.Fprint(w, strings.TrimSpace(c.ChainPEM)+"\n")
 	return nil
 }

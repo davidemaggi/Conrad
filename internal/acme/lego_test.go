@@ -191,6 +191,12 @@ func (e *env) verify(res *certificate.Resource, name string) *x509.Certificate {
 	inter := x509.NewCertPool()
 	inter.AppendCertsFromPEM(res.IssuerCertificate)
 	x := leaf(e.t, res)
+	// certbot's chain.pem is the first cert after the leaf: it must be the issuer, not the leaf again.
+	if b, _ := pem.Decode(res.IssuerCertificate); b == nil {
+		e.t.Fatal("no issuer certificate in chain")
+	} else if ic, err := x509.ParseCertificate(b.Bytes); err != nil || x.CheckSignatureFrom(ic) != nil {
+		e.t.Fatalf("first chain certificate is not the leaf's issuer (subject %v)", ic.Subject)
+	}
 	if _, err := x.Verify(x509.VerifyOptions{Roots: roots, Intermediates: inter, DNSName: name}); err != nil {
 		e.t.Fatalf("chain does not verify: %v", err)
 	}
