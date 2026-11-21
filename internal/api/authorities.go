@@ -160,6 +160,10 @@ func (a *API) createIssuer(w http.ResponseWriter, r *http.Request) {
 
 // failCA maps known errors and reports other CA failures (bad input) as 400.
 func (a *API) failCA(w http.ResponseWriter, err error) {
+	if errors.Is(err, ca.ErrNameNotPermitted) {
+		fail(w, http.StatusBadRequest, "cert.name_not_permitted", err.Error())
+		return
+	}
 	for _, known := range []error{ca.ErrLocked, ca.ErrNotInitialized, ca.ErrIssuerNotFound, ca.ErrIssuerInactive,
 		ca.ErrSlugTaken, ca.ErrInvalidSlug, ca.ErrCannotRevokeDef, store.ErrNotFound} {
 		if errors.Is(err, known) {

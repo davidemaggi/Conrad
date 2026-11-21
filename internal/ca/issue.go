@@ -104,6 +104,9 @@ func (s *Service) issueWith(ctx context.Context, issuer *store.Authority, req Is
 	}
 
 	dns := dedupeLower(req.DNSNames)
+	if err := checkConstraints(s.constraintSets(ctx, issuer), dns); err != nil {
+		return nil, err
+	}
 	cn := req.CommonName
 	if cn != "" && !contains(dns, strings.ToLower(cn)) {
 		cn = ""

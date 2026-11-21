@@ -38,7 +38,7 @@
       "throttled": "Too many attempts. Try again in {{retryAfter}} s.",
       "weak_password": "Password too weak: use at least 12 characters."
     },
-    "cert": { "bad_csr": "Invalid CSR: {{message}}" },
+    "cert": { "bad_csr": "Invalid CSR: {{message}}", "name_not_permitted": "This name is outside the root CA’s name constraints, so browsers would reject it: {{message}}" },
     "notify": { "invalid": "Invalid channel: {{message}}", "test_failed": "Test failed: {{message}}" },
     "policy": { "invalid": "Invalid policy: {{message}}" },
     "settings": {

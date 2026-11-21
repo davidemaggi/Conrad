@@ -10,11 +10,13 @@ import (
 	"crypto/x509"
 	"crypto/x509/pkix"
 	"encoding/pem"
+	"errors"
 	"math/big"
 	"net"
 	"os"
 	"path/filepath"
 	"slices"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -30,6 +32,8 @@ type tlsManager struct {
 	dir  string
 	mu   sync.Mutex
 	cert atomic.Pointer[tls.Certificate]
+
+	warnOnce sync.Once
 }
 
 func (m *tlsManager) config() *tls.Config {
@@ -67,7 +71,7 @@ func (m *tlsManager) refresh(ctx context.Context, force bool) error {
 		c, err := m.issue(ctx)
 		if err == nil {
 			m.cert.Store(c)
-			m.s.Log.Info("installed TLS certificate from the default issuer", "hosts", m.s.serverHosts(), "not_after", c.Leaf.NotAfter)
+			m.s.Log.Info("installed TLS certificate from the default issuer", "hosts", m.hosts(ctx), "not_after", c.Leaf.NotAfter)
 			return nil
 		}
 		m.s.Log.Error("issuing server certificate failed; keeping the current one", "err", err)
@@ -94,10 +98,10 @@ func (m *tlsManager) loadDisk(ctx context.Context) *tls.Certificate {
 	if time.Now().After(c.Leaf.NotBefore.Add(life * 2 / 3)) {
 		return nil
 	}
-	for _, h := range m.s.serverHosts() {
-		if c.Leaf.VerifyHostname(h) != nil {
-			return nil
-		}
+	// Re-issue when the configured names changed in either direction: a stale
+	// extra name (e.g. a removed external URL) can break the whole certificate.
+	if !sameNames(leafNames(c.Leaf), m.hosts(ctx)) {
+		return nil
 	}
 	if iss, err := m.s.CA.Issuer(ctx, ""); err == nil {
 		if ic, err := ca.ParseCertificatesPEM([]byte(iss.CertPEM)); err == nil && len(ic) > 0 {
@@ -111,12 +115,15 @@ func (m *tlsManager) loadDisk(ctx context.Context) *tls.Certificate {
 
 func (m *tlsManager) issue(ctx context.Context) (*tls.Certificate, error) {
 	var req ca.IssueRequest
-	for _, h := range m.s.serverHosts() {
+	for _, h := range m.hosts(ctx) {
 		if ip := net.ParseIP(h); ip != nil {
 			req.IPs = append(req.IPs, ip)
 		} else {
 			req.DNSNames = append(req.DNSNames, h)
 		}
+	}
+	if len(req.DNSNames)+len(req.IPs) == 0 {
+		return nil, errors.New("no configured hostname is allowed by the CA's name constraints")
 	}
 	req.Source, req.Validity = "system", ca.DefaultLeafValidity
 	rec, key, err := m.s.CA.IssueWithKey(ctx, "", signer.ECDSAP256, req)
@@ -164,4 +171,44 @@ func selfSigned(hosts []string) (*tls.Certificate, error) {
 	}
 	leaf, _ := x509.ParseCertificate(der)
 	return &tls.Certificate{Certificate: [][]byte{der}, PrivateKey: key, Leaf: leaf}, nil
+}
+
+// hosts returns the names for Conrad's own certificate: the configured
+// hostnames minus any the CA's name constraints forbid (a certificate that
+// violates them is rejected by browsers as a whole).
+func (m *tlsManager) hosts(ctx context.Context) []string {
+	all := m.s.serverHosts()
+	ok, bad, err := m.s.CA.PermittedNames(ctx, "", all)
+	if err != nil {
+		return all
+	}
+	if len(bad) > 0 {
+		m.warnOnce.Do(func() {
+			m.s.Log.Warn("leaving hostnames out of Conrad's certificate: outside the CA's name constraints", "hosts", bad)
+		})
+	}
+	return ok
+}
+
+func leafNames(c *x509.Certificate) []string {
+	out := slices.Clone(c.DNSNames)
+	for _, ip := range c.IPAddresses {
+		out = append(out, ip.String())
+	}
+	return out
+}
+
+func sameNames(a, b []string) bool {
+	norm := func(in []string) []string {
+		out := make([]string, 0, len(in))
+		for _, v := range in {
+			if ip := net.ParseIP(v); ip != nil {
+				v = ip.String()
+			}
+			out = append(out, strings.ToLower(v))
+		}
+		slices.Sort(out)
+		return slices.Compact(out)
+	}
+	return slices.Equal(norm(a), norm(b))
 }

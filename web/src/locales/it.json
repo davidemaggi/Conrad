@@ -38,7 +38,7 @@
       "throttled": "Troppi tentativi. Riprova tra {{retryAfter}} s.",
       "weak_password": "Password troppo debole: usa almeno 12 caratteri."
     },
-    "cert": { "bad_csr": "CSR non valida: {{message}}" },
+    "cert": { "bad_csr": "CSR non valida: {{message}}", "name_not_permitted": "Questo nome è fuori dai name constraint della root CA, i browser lo rifiuterebbero: {{message}}" },
     "notify": { "invalid": "Canale non valido: {{message}}", "test_failed": "Test non riuscito: {{message}}" },
     "policy": { "invalid": "Policy non valida: {{message}}" },
     "settings": {

@@ -5,6 +5,7 @@ import (
 	"crypto/x509"
 	"errors"
 	"math/big"
+	"slices"
 	"testing"
 	"time"
 
@@ -165,15 +166,14 @@ func TestMultipleIssuersAndRotation(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Name constraints are enforced by verifiers: a name outside must fail verification.
+	// A name outside the constraints would be rejected by every verifier, so Conrad refuses to sign it.
 	bad := *leafKey(t)
 	bad.DNSNames = []string{"nas.home.lab"}
-	badRec, err := svc.Issue(ctx, "k8s", bad)
-	if err != nil {
-		t.Fatal(err)
+	if _, err := svc.Issue(ctx, "k8s", bad); !errors.Is(err, ErrNameNotPermitted) {
+		t.Fatalf("want ErrNameNotPermitted, got %v", err)
 	}
-	if err := verifyErr(svc, badRec, "nas.home.lab"); err == nil {
-		t.Fatal("certificate outside name constraints should not verify")
+	if err := verifyErr(svc, old, "api.k8s.home.lab"); err != nil {
+		t.Fatalf("certificate inside the constraints should verify: %v", err)
 	}
 
 	oldIssuer, _ := svc.Issuer(ctx, "k8s")
@@ -309,5 +309,53 @@ func TestMobileConfig(t *testing.T) {
 	b, err := MobileConfig("Conrad", []byte{1, 2, 3})
 	if err != nil || len(b) == 0 {
 		t.Fatal(err)
+	}
+}
+
+func TestRootNameConstraintsEnforced(t *testing.T) {
+	st, err := store.Open(":memory:")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { st.Close() })
+	svc := New(st, signer.NewSoftware(), "https://conrad.test", nil)
+	ctx := context.Background()
+	if _, _, err := svc.Init(ctx, InitRequest{
+		Secret:          pass,
+		Subject:         Subject{CommonName: "DM Lab Root CA"},
+		NameConstraints: []string{"dm.lab"},
+		Issuer:          IssuerRequest{Slug: "default", Name: "DM Lab Issuer"},
+	}); err != nil {
+		t.Fatal(err)
+	}
+	iss, _ := svc.Issuer(ctx, "")
+	if c, _ := parsePEMCert(iss.CertPEM); c.Subject.CommonName != "DM Lab Issuer" {
+		t.Fatalf("issuer CN = %q, want %q", c.Subject.CommonName, "DM Lab Issuer")
+	}
+
+	ok, bad, err := svc.PermittedNames(ctx, "", []string{"ca.dm.lab", "ca.example.com", "192.168.1.5", "dm.lab", "evildm.lab"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.Equal(ok, []string{"ca.dm.lab", "192.168.1.5", "dm.lab"}) || !slices.Equal(bad, []string{"ca.example.com", "evildm.lab"}) {
+		t.Fatalf("ok=%v bad=%v", ok, bad)
+	}
+
+	req := *leafKey(t)
+	req.DNSNames = []string{"ca.dm.lab", "ca.example.com"}
+	if _, err := svc.Issue(ctx, "", req); !errors.Is(err, ErrNameNotPermitted) {
+		t.Fatalf("want ErrNameNotPermitted, got %v", err)
+	}
+	req.DNSNames = []string{"*.apps.dm.lab"}
+	if _, err := svc.Issue(ctx, "", req); err != nil {
+		t.Fatalf("wildcard inside constraints: %v", err)
+	}
+}
+
+func TestIssuerCN(t *testing.T) {
+	for in, want := range map[string]string{"Default": "Conrad Default Issuer", "DM Lab Issuer": "DM Lab Issuer", "servers issuer": "servers issuer"} {
+		if got := issuerCN(in); got != want {
+			t.Errorf("issuerCN(%q) = %q, want %q", in, got, want)
+		}
 	}
 }

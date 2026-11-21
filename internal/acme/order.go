@@ -135,6 +135,14 @@ func (s *Server) newOrder(w http.ResponseWriter, r *http.Request, slug string) *
 			subs = append(subs, sp)
 			continue
 		}
+		if id.Type == "dns" {
+			if _, bad, err := s.CA.PermittedNames(ctx, slug, []string{id.Value}); err == nil && len(bad) > 0 {
+				sp := rejectedID("%s is outside the CA's name constraints", id.Value)
+				sp.Identifier = &ident{Type: id.Type, Value: id.Value}
+				subs = append(subs, sp)
+				continue
+			}
+		}
 		wc := strings.HasPrefix(id.Value, "*.")
 		if len(pol.ChallengesFor(id.Type, wc)) == 0 {
 			sp := rejectedID("no challenge type is enabled for %s", id.Value)

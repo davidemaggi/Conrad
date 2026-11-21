@@ -143,6 +143,15 @@ func (s *Service) createRoot(ctx context.Context, subj Subject, alg signer.Algor
 	return a, nil
 }
 
+// issuerCN is the fallback common name of an issuer: its name, with " Issuer"
+// appended unless the name already ends with it.
+func issuerCN(name string) string {
+	if strings.HasSuffix(strings.ToLower(strings.TrimSpace(name)), "issuer") {
+		return strings.TrimSpace(name)
+	}
+	return "Conrad " + strings.TrimSpace(name) + " Issuer"
+}
+
 func applyNameConstraints(tmpl *x509.Certificate, domains []string) {
 	var clean []string
 	for _, d := range domains {
@@ -222,7 +231,7 @@ func (s *Service) signIssuer(ctx context.Context, root *store.Authority, req Iss
 	id := store.NewID()
 	tmpl := &x509.Certificate{
 		SerialNumber:          serial,
-		Subject:               req.Subject.name("Conrad " + req.Name + " Issuer"),
+		Subject:               req.Subject.name(issuerCN(req.Name)),
 		NotBefore:             now.Add(-time.Minute),
 		NotAfter:              notAfter,
 		KeyUsage:              x509.KeyUsageCertSign | x509.KeyUsageCRLSign | x509.KeyUsageDigitalSignature,
