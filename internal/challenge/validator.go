@@ -39,8 +39,8 @@ type Validator struct {
 	TLSPort   int
 	Resolvers []string // "host:port" or "host"; empty = system resolver
 	Timeout   time.Duration
-	// Dialer is used for HTTP-01 and TLS-ALPN-01 connections (tests may override).
-	Dialer *net.Dialer
+	// DialContext is used for HTTP-01 and TLS-ALPN-01 connections (tests may override).
+	DialContext func(ctx context.Context, network, addr string) (net.Conn, error)
 }
 
 // Validate checks challenge typ for identifier (type "dns"/"ip", value).
@@ -62,11 +62,12 @@ func (v *Validator) Validate(ctx context.Context, typ, idType, idValue, token, k
 	return fail("malformed", "unsupported challenge type %q", typ)
 }
 
-func (v *Validator) dialer() *net.Dialer {
-	if v.Dialer != nil {
-		return v.Dialer
+func (v *Validator) dial(ctx context.Context, network, addr string) (net.Conn, error) {
+	if v.DialContext != nil {
+		return v.DialContext(ctx, network, addr)
 	}
-	return &net.Dialer{Timeout: 5 * time.Second}
+	d := &net.Dialer{Timeout: 5 * time.Second}
+	return d.DialContext(ctx, network, addr)
 }
 
 func port(p, def int) string {
@@ -80,7 +81,7 @@ func (v *Validator) http01(ctx context.Context, host, token, keyAuth string) err
 	u := "http://" + net.JoinHostPort(host, port(v.HTTPPort, 80)) + "/.well-known/acme-challenge/" + token
 	client := &http.Client{
 		Transport: &http.Transport{
-			DialContext:     v.dialer().DialContext,
+			DialContext:     v.dial,
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true}, // redirects to https are allowed, trust not required (RFC 8555 §8.3)
 			Proxy:           nil,
 		},
@@ -213,18 +214,21 @@ func (v *Validator) tlsALPN01(ctx context.Context, idType, idValue, keyAuth stri
 		sni = strings.TrimSuffix(rev, ".")
 	}
 	addr := net.JoinHostPort(idValue, port(v.TLSPort, 443))
-	d := &tls.Dialer{NetDialer: v.dialer(), Config: &tls.Config{
+	raw, err := v.dial(ctx, "tcp", addr)
+	if err != nil {
+		return fail("connection", "TLS-ALPN-01: cannot connect to %s: %v", addr, err)
+	}
+	defer raw.Close()
+	conn := tls.Client(raw, &tls.Config{
 		ServerName:         sni,
 		NextProtos:         []string{"acme-tls/1"},
 		InsecureSkipVerify: true, // the self-signed validation certificate is checked below
 		MinVersion:         tls.VersionTLS12,
-	}}
-	conn, err := d.DialContext(ctx, "tcp", addr)
-	if err != nil {
+	})
+	if err := conn.HandshakeContext(ctx); err != nil {
 		return fail("tls", "TLS-ALPN-01: handshake with %s failed: %v", addr, err)
 	}
-	defer conn.Close()
-	st := conn.(*tls.Conn).ConnectionState()
+	st := conn.ConnectionState()
 	if st.NegotiatedProtocol != "acme-tls/1" {
 		return fail("tls", "TLS-ALPN-01: server did not negotiate acme-tls/1")
 	}

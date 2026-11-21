@@ -117,12 +117,7 @@ func TestTLSALPN01(t *testing.T) {
 			go func() { c.(*tls.Conn).Handshake(); c.Close() }()
 		}
 	}()
-	// Resolve "nas.home.lab" to the listener by dialing 127.0.0.1 regardless of host.
-	v := &Validator{TLSPort: portOf(t, ln.Addr().String()), Dialer: &net.Dialer{Resolver: &net.Resolver{PreferGo: true, Dial: func(ctx context.Context, n, a string) (net.Conn, error) {
-		return nil, errors.New("no dns in test")
-	}}}}
-	// Validate against an IP-less hostname is not resolvable in tests; check the cert logic directly
-	// and the network path using 127.0.0.1 with a DNS-typed identifier mismatch.
+	v := &Validator{TLSPort: portOf(t, ln.Addr().String())}
 	if err := checkALPNCert(mustParse(cert), "dns", "nas.home.lab", keyAuth); err != nil {
 		t.Fatal(err)
 	}

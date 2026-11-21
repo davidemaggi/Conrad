@@ -70,7 +70,7 @@ Each `internal/` package exposes a small interface and depends only on interface
 - With an HSM, the PKCS#11 PIN is supplied the same way as the passphrase.
 
 ### Data model (SQLite)
-`settings`, `admin`, `sessions`, `ca_keys` (metadata + encrypted blob or PKCS#11 reference), `authorities` (id, slug, kind = root|intermediate, parent_id, status = active|retiring|retired|revoked, is_default, cert PEM, key_id; supports multiple roots at the data level; a slug is unique among non-retired issuers so a successor can take it over during rotation), `acme_accounts`, `acme_eab_keys`, `acme_nonces`, `acme_orders`, `acme_authzs`, `acme_challenges`, `certificates` (serial, PEM, SANs, not_before/after, status, issuer_id, account_id, source = acme|manual), `revocations`, `policies` (one per issuer), `notification_channels`, `notification_log` (cert_id + threshold, for dedupe), `audit_log`.
+`settings`, `admin`, `sessions`, `ca_keys` (metadata + encrypted blob or PKCS#11 reference), `authorities` (id, slug, kind = root|intermediate, parent_id, status = active|retiring|retired|revoked, is_default, cert PEM, key_id; supports multiple roots at the data level; a slug is unique among active issuers only, so a successor takes it over during rotation while the old issuer moves to retiring), `acme_accounts`, `acme_eab_keys`, `acme_nonces`, `acme_orders`, `acme_authzs`, `acme_challenges`, `certificates` (serial, PEM, SANs, not_before/after, status, issuer_id, account_id, source = acme|manual), `revocations`, `policies` (one per issuer), `notification_channels`, `notification_log` (cert_id + threshold, for dedupe), `audit_log`.
 
 ---
 
@@ -79,7 +79,7 @@ Each `internal/` package exposes a small interface and depends only on interface
 - **Root:** ECDSA P-384, 10 years by default, `pathLen=1`, name constraints optional (recommended: limit to the allowed domains).
 - **Intermediates ("issuers"):** any number, created from the UI under the root. ECDSA P-256 by default (P-384 or RSA 3072 optional), 5 years by default, `pathLen=0`. Each issuer has:
   - a unique slug (e.g. `servers`, `k8s`, `devices`), display name and description;
-  - its own ACME directory (`/acme/{slug}/directory`), policy, EAB keys, CRL (`/crl/{slug}.crl`) and OCSP responder (`/ocsp/{slug}`);
+  - its own ACME directory (`/acme/{slug}/directory`), policy, EAB keys, CRL (`/crl/{authorityID}.crl`) and OCSP responder (`/ocsp/{authorityID}`); these URLs use the immutable authority ID rather than the slug, because a slug moves to the successor on rotation while certificates already issued must keep pointing at their own issuer;
   - optional name constraints narrower than the root's.
 - **Default issuer:** exactly one issuer is marked default. The wizard creates it as `default`. `/acme/directory` is an alias of the default issuer's directory, and the default issuer signs Conrad's own server certificate.
 - **Issuer rotation:** "Rotate" creates a successor issuer with the same slug, policy and EAB keys. New orders on that slug are signed by the successor immediately; the old issuer moves to `retiring` (still serves CRL/OCSP and accepts revocations, issues nothing) until its last leaf certificate expires, then becomes `retired`. Clients need no change because they trust the root.
