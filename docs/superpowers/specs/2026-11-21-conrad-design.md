@@ -140,7 +140,8 @@ Each `internal/` package exposes a small interface and depends only on interface
 
 - A daily scheduler, plus a run at startup, checks certificates against thresholds (default 30/14/7/1 days, configurable). Each (certificate, threshold) pair is notified once, deduplicated through `notification_log`.
 - **SMTP:** host, port, security = `none` | `starttls` | `tls`, optional auth (PLAIN/LOGIN; empty credentials mean no AUTH, for internal relays), optional skip-verify, from/to addresses. A "send test email" button is available. HTML + text templates are localized.
-- **Webhooks:** POST of a JSON event, header `X-Conrad-Signature: sha256=<hmac>`, 3 retries with exponential backoff, plus a test button.
+- **Webhooks:** POST of a JSON event (`id`, `type`, `occurredAt`, `data`, localized `title`/`text`), headers `X-Conrad-Event`, `X-Conrad-Delivery`, `X-Conrad-Timestamp` and `X-Conrad-Signature: sha256=<hex HMAC-SHA256 of "<timestamp>.<body>">`, 3 retries with exponential backoff, plus a test button.
+- Expiry checks skip certificates superseded by a renewal (same issuer and names, later expiry). CA thresholds are fixed at 90/30/7/1 days. A dedupe record is dropped when no channel received the notification, so it is retried. `acme.failed` (final challenge/order failure) is an extra subscribable event.
 - **Events:** `cert.expiring`, `cert.issued`, `cert.revoked`, `ca.expiring` (root or any issuer), `ca.locked`.
 
 ---

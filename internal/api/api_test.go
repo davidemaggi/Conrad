@@ -12,6 +12,7 @@ import (
 	"github.com/davidemaggi/conrad/internal/auth"
 	"github.com/davidemaggi/conrad/internal/ca"
 	"github.com/davidemaggi/conrad/internal/crypto/signer"
+	"github.com/davidemaggi/conrad/internal/notify"
 	"github.com/davidemaggi/conrad/internal/store"
 )
 
@@ -56,7 +57,7 @@ func setupAPI(t *testing.T) (*client, *SetupToken, *store.Store) {
 	svc := ca.New(st, signer.NewSoftware(), "https://conrad.test", nil)
 	tok := NewSetupToken()
 	a := New(Deps{Store: st, CA: svc, Sessions: auth.NewSessions(st, false), OIDC: auth.NewOIDC(st, "https://conrad.test/api/v1/auth/oidc/callback"),
-		Audit: audit.New(st, nil), Setup: tok, BaseURL: "https://conrad.test", Version: "test"})
+		Audit: audit.New(st, nil), Notifier: notify.New(st, "https://conrad.test", nil), Setup: tok, BaseURL: "https://conrad.test", Version: "test"})
 	srv := httptest.NewServer(a.Handler())
 	t.Cleanup(srv.Close)
 	jar, _ := cookiejar.New(nil)
@@ -198,4 +199,37 @@ func TestAuthoritiesAndCertificates(t *testing.T) {
 		t.Fatalf("backup: %d", res.StatusCode)
 	}
 	res.Body.Close()
+}
+
+func TestNotificationChannels(t *testing.T) {
+	c, tok, _ := setupAPI(t)
+	doSetup(t, c, tok.Value())
+	hits := 0
+	hook := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { hits++ }))
+	defer hook.Close()
+
+	var ch map[string]any
+	if code := c.do("POST", "/api/v1/notifications/channels", map[string]any{"kind": "webhook", "name": "ntfy", "enabled": true,
+		"webhook": map[string]any{"url": hook.URL, "secret": "s3cret"}}, &ch); code != 201 {
+		t.Fatalf("create channel: %d %v", code, ch)
+	}
+	id := ch["id"].(string)
+	var list struct{ Items []map[string]any }
+	c.do("GET", "/api/v1/notifications/channels", nil, &list)
+	wh := list.Items[0]["webhook"].(map[string]any)
+	if wh["secret"] != nil || list.Items[0]["secretSet"] != true {
+		t.Fatalf("secret leaked or not flagged: %v", list.Items[0])
+	}
+	if code := c.do("POST", "/api/v1/notifications/channels/"+id+"/test", nil, nil); code != 200 || hits != 1 {
+		t.Fatalf("test: %d hits=%d", code, hits)
+	}
+	if code := c.do("POST", "/api/v1/notifications/channels", map[string]any{"kind": "smtp", "name": "x", "smtp": map[string]any{"host": "m"}}, nil); code != 400 {
+		t.Fatalf("invalid smtp accepted: %d", code)
+	}
+	if code := c.do("PUT", "/api/v1/notifications/settings", map[string]any{"thresholdsDays": []int{21, 3}}, nil); code != 200 {
+		t.Fatalf("thresholds: %d", code)
+	}
+	if code := c.do("DELETE", "/api/v1/notifications/channels/"+id, nil, nil); code != 204 {
+		t.Fatalf("delete: %d", code)
+	}
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/davidemaggi/conrad/internal/audit"
 	"github.com/davidemaggi/conrad/internal/auth"
 	"github.com/davidemaggi/conrad/internal/ca"
+	"github.com/davidemaggi/conrad/internal/notify"
 	"github.com/davidemaggi/conrad/internal/store"
 )
 
@@ -27,6 +28,7 @@ type Deps struct {
 	Audit    *audit.Logger
 	Log      *slog.Logger
 	Setup    *SetupToken
+	Notifier *notify.Notifier
 	BaseURL  string
 	DataDir  string
 	Version  string
@@ -135,6 +137,15 @@ func (a *API) Handler() http.Handler {
 	r.Auth("POST "+p+"/certificates/{id}/revoke", a.revokeCertificate)
 	r.Auth("GET "+p+"/accounts", a.listAccounts)
 	r.Auth("POST "+p+"/accounts/{id}/deactivate", a.deactivateAccount)
+
+	r.Auth("GET "+p+"/notifications/channels", a.listChannels)
+	r.Auth("POST "+p+"/notifications/channels", a.createChannel)
+	r.Auth("PUT "+p+"/notifications/channels/{id}", a.updateChannel)
+	r.Auth("DELETE "+p+"/notifications/channels/{id}", a.deleteChannel)
+	r.Auth("POST "+p+"/notifications/channels/{id}/test", a.testChannel)
+	r.Auth("POST "+p+"/notifications/test", a.testDraftChannel)
+	r.Auth("GET "+p+"/notifications/settings", a.getNotifySettings)
+	r.Auth("PUT "+p+"/notifications/settings", a.putNotifySettings)
 
 	r.Auth("GET "+p+"/audit", a.listAudit)
 	r.Auth("GET "+p+"/system/info", a.systemInfo)

@@ -22,6 +22,7 @@ import (
 	"github.com/davidemaggi/conrad/internal/challenge"
 	"github.com/davidemaggi/conrad/internal/config"
 	"github.com/davidemaggi/conrad/internal/crypto/signer"
+	"github.com/davidemaggi/conrad/internal/notify"
 	"github.com/davidemaggi/conrad/internal/store"
 	"github.com/davidemaggi/conrad/internal/web"
 )
@@ -36,12 +37,13 @@ type Server struct {
 	Version string
 	BaseURL string
 
-	Store *store.Store
-	CA    *ca.Service
-	ACME  *acme.Server
-	API   *api.API
-	Audit *audit.Logger
-	Setup *api.SetupToken
+	Store  *store.Store
+	CA     *ca.Service
+	ACME   *acme.Server
+	API    *api.API
+	Audit  *audit.Logger
+	Notify *notify.Notifier
+	Setup  *api.SetupToken
 
 	// ACMEEvents receives ACME events after they are audited (notifications hook).
 	ACMEEvents func(context.Context, acme.Event)
@@ -68,6 +70,8 @@ func New(cfg *config.Config, log *slog.Logger, version string) (*Server, error) 
 	s := &Server{Cfg: cfg, Log: log, Version: version, Store: st, BaseURL: baseURL(cfg)}
 	s.CA = ca.New(st, keys, s.BaseURL, log)
 	s.Audit = audit.New(st, log)
+	s.Notify = notify.New(st, s.BaseURL, log)
+	s.Audit.OnRecord = s.Notify.FromAudit
 	s.tls = tlsManager{s: s, dir: cfg.DataDir + "/tls"}
 
 	v := &challenge.Validator{HTTPPort: cfg.ChallengePorts.HTTP, TLSPort: cfg.ChallengePorts.TLS, Resolvers: cfg.DNSResolvers}
@@ -94,7 +98,7 @@ func New(cfg *config.Config, log *slog.Logger, version string) (*Server, error) 
 	s.API = api.New(api.Deps{
 		Store: st, CA: s.CA, Sessions: auth.NewSessions(st, secure),
 		OIDC:  auth.NewOIDC(st, s.BaseURL+"/api/v1/auth/oidc/callback"),
-		Audit: s.Audit, Log: log, Setup: s.Setup, BaseURL: s.BaseURL, DataDir: cfg.DataDir, Version: version,
+		Audit: s.Audit, Notifier: s.Notify, Log: log, Setup: s.Setup, BaseURL: s.BaseURL, DataDir: cfg.DataDir, Version: version,
 		OnCAReady: func(ctx context.Context) { s.tls.refresh(ctx, true) },
 		Extra: func(r *api.Router) {
 			if s.ExtraRoutes != nil {
@@ -223,6 +227,7 @@ func (s *Server) Run(ctx context.Context) error {
 		}
 	}
 	go s.housekeeping(ctx)
+	go s.Notify.RunScheduler(ctx, 6*time.Hour)
 
 	var servers []*http.Server
 	main := &http.Server{Addr: s.Cfg.HTTPSAddr, Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second, ErrorLog: slog.NewLogLogger(s.Log.Handler(), slog.LevelDebug)}
@@ -261,6 +266,7 @@ func (s *Server) Run(ctx context.Context) error {
 		_ = srv.Shutdown(shut)
 	}
 	wg.Wait()
+	s.Notify.Wait()
 	return err
 }
 
@@ -274,10 +280,12 @@ func (s *Server) autoUnlock(ctx context.Context) {
 	}
 	if secret == "" {
 		s.Log.Warn("CA is locked: unlock it from the web UI (or set CONRAD_CA_PASSPHRASE)")
+		s.Notify.CALockedAlert(ctx)
 		return
 	}
 	if err := s.CA.Unlock(ctx, secret); err != nil {
 		s.Log.Error("automatic CA unlock failed", "err", err)
+		s.Notify.CALockedAlert(ctx)
 		return
 	}
 	s.Audit.Record(ctx, "system", "ca.unlocked", "", "", map[string]any{"automatic": true})

@@ -12,6 +12,8 @@ import (
 type Logger struct {
 	Store *store.Store
 	Log   *slog.Logger
+	// OnRecord is called after an entry is stored (e.g. to send notifications).
+	OnRecord func(context.Context, *store.AuditEntry)
 }
 
 // New creates an audit logger.
@@ -30,4 +32,7 @@ func (l *Logger) Record(ctx context.Context, actor, action, target, ip string, d
 		return
 	}
 	l.Log.Info("audit", "actor", actor, "action", action, "target", target, "ip", ip)
+	if l.OnRecord != nil {
+		l.OnRecord(context.WithoutCancel(ctx), e)
+	}
 }
