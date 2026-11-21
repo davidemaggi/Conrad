@@ -3,12 +3,15 @@ module github.com/davidemaggi/conrad
 go 1.26.0
 
 require (
+	github.com/coreos/go-oidc/v3 v3.21.0
 	github.com/go-acme/lego/v4 v4.35.2
 	github.com/go-jose/go-jose/v4 v4.1.9
 	github.com/miekg/dns v1.1.73
 	golang.org/x/crypto v0.59.0
+	golang.org/x/oauth2 v0.38.0
 	gopkg.in/yaml.v3 v3.0.1
 	modernc.org/sqlite v1.62.0
+	software.sslmate.com/src/go-pkcs12 v0.7.4
 )
 
 require (
